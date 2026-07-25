@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <title>DocuMind</title>
+
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body>
+
+    <nav class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-8 py-4 flex justify-between items-center">
+
+            <h1 class="text-2xl font-bold text-blue-600">
+                📚 DocuMind
+            </h1>
+
+            <div class="space-x-6">
+                <a href="/" class="text-gray-700 hover:text-blue-600 transition">
+                    Home
+                </a>
+
+                <a href="/about" class="text-gray-700 hover:text-blue-600 transition">
+                    About
+                </a>
+            </div>
+
+        </div>
+    </nav>
+
+    <!-- Content goes here -->
+
+    {% block content %}
+
+    {% endblock %}
+
+    <hr>
+
+    <footer>
+        © 2026 DocuMind
+    </footer>
+
+</body>
+</html>
