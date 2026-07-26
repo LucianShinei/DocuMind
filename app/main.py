@@ -1,38 +1,14 @@
-from fastapi import FastAPI, Request
-from fastapi.templating import Jinja2Templates
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-app=FastAPI(
-    title="DocuMind",   
+from app.routers.home import router as home_router
+
+app = FastAPI(
+    title="DocuMind",
     version="0.1.0",
-    description="Enterprise Document Intelligence Platform"
+    description="Enterprise Document Intelligence Platform",
 )
 
-templates = Jinja2Templates(directory="app/templates")
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-app.mount(
-    "/static",
-    StaticFiles(directory="app/static"),
-    name="static"
-)
-
-
-@app.get("/")
-async def home(request: Request):
-    return templates.TemplateResponse(
-        request=request,
-        name="index.html",
-        context={
-            "title": "DocuMind",
-            "user": "Ansh",
-            "version": "0.1.0"
-        }
-    )
-
-
-@app.get("/about")
-async def about():
-    return {
-        "project": "DocuMind",
-        "version": "0.1.0"
-    }
+app.include_router(home_router)
