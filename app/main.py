@@ -11,6 +11,8 @@ from app.database.mongodb import (
     close_mongo_connection,
 )
 
+from app.routers.documents import router as document_router
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -31,3 +33,4 @@ app = FastAPI(
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 app.include_router(home_router)
+app.include_router(document_router)

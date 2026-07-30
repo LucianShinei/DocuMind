@@ -5,6 +5,8 @@ from app.config.settings import settings
 client: AsyncIOMotorClient | None = None
 database = None
 
+def get_documents_collection():
+    return database.documents
 
 async def connect_to_mongo():
     global client, database
