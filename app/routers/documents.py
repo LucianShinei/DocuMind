@@ -18,8 +18,12 @@ router = APIRouter(
 
 
 @router.get("/", response_model=List[DocumentResponse])
-async def list_documents():
-    return await get_all_documents()
+async def list_documents(
+    skip: int = 0,
+    limit: int = 10,
+    search: str = "",
+):
+    return await get_all_documents(skip, limit, search)
 
 
 @router.post("/upload")

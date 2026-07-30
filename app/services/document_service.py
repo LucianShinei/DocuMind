@@ -9,6 +9,9 @@ from bson import ObjectId
 from fastapi import HTTPException
 from fastapi.responses import FileResponse
 
+from app.schemas.mappers import document_to_response
+
+
 UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
 
@@ -42,11 +45,24 @@ from app.database.mongodb import get_documents_collection
 from app.schemas.mappers import document_to_response
 
 
-async def get_all_documents():
-
+async def get_all_documents(
+    skip: int = 0,
+    limit: int = 10,
+    search: str = "",
+):
     collection = get_documents_collection()
 
-    documents = await collection.find().to_list(length=None)
+    query = {}
+
+    if search:
+        query = {"filename": {"$regex": search, "$options": "i"}}
+
+    documents = (
+        await collection.find(query)
+        .skip(skip)
+        .limit(limit)
+        .to_list(length=limit)
+    )
 
     return [document_to_response(doc) for doc in documents]
 
