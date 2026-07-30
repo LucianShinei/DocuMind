@@ -13,6 +13,8 @@ from app.database.mongodb import (
 
 from app.routers.documents import router as document_router
 
+from app.routers import auth
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -34,3 +36,4 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 app.include_router(home_router)
 app.include_router(document_router)
+app.include_router(auth.router)

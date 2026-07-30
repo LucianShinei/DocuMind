@@ -8,6 +8,16 @@ database = None
 def get_documents_collection():
     return database.documents
 
+client: AsyncIOMotorClient | None = None
+database = None
+
+def get_documents_collection():
+    return database.documents
+
+
+def get_database():
+    return database
+
 async def connect_to_mongo():
     global client, database
 
