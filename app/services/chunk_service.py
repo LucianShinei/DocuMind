@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 from app.database.mongodb import get_chunks_collection
 from app.models.chunk import DocumentChunk
-
+from app.services.embedding_service import generate_embedding
 
 CHUNK_SIZE = 800
 
@@ -21,12 +21,13 @@ async def create_chunks(
         chunk_text = text[i:i + CHUNK_SIZE]
 
         chunk = DocumentChunk(
-            document_id=document_id,
-            owner_id=owner_id,
-            chunk_index=len(chunks),
-            text=chunk_text,
-            created_at=datetime.now(timezone.utc),
-        )
+        document_id=document_id,
+        owner_id=owner_id,
+        chunk_index=len(chunks),
+        text=chunk_text,
+        embedding=generate_embedding(chunk_text),
+        created_at=datetime.now(timezone.utc),
+    )
 
         chunks.append(chunk.model_dump())
 

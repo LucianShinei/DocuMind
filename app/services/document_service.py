@@ -59,7 +59,6 @@ async def save_document(file: UploadFile, user: dict):
     user["sub"],
     text,
 )
-
     return document
 
 from app.database.mongodb import get_documents_collection
