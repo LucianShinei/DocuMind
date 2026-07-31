@@ -1,7 +1,7 @@
 from pathlib import Path
 from fastapi import UploadFile
 
-from datetime import datetime
+from datetime import datetime, timezone
 from app.models.document import Document
 
 from app.database.mongodb import get_documents_collection
@@ -18,6 +18,10 @@ from app.auth.security import hash_password, verify_password
 from app.database.mongodb import get_database
 from app.models.user import User
 
+from app.services.pdf_service import extract_text
+
+from app.services.chunk_service import create_chunks
+
 
 UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
@@ -31,6 +35,10 @@ async def save_document(file: UploadFile, user: dict):
         contents = await file.read()
 
         buffer.write(contents)
+        text = ""
+    if file.content_type == "application/pdf":
+        text = await extract_text(str(file_path))
+    
 
     document = Document(
     filename=file.filename,
@@ -38,11 +46,19 @@ async def save_document(file: UploadFile, user: dict):
     content_type=file.content_type,
     size=file.size,
     owner_id=user["sub"],
-    uploaded_at=datetime.utcnow(),
+    text=text,
+    uploaded_at=datetime.now(timezone.utc),
 )
     collection = get_documents_collection()
 
-    await collection.insert_one(document.model_dump())
+    result = await collection.insert_one(
+    document.model_dump()
+)
+    await create_chunks(
+    str(result.inserted_id),
+    user["sub"],
+    text,
+)
 
     return document
 

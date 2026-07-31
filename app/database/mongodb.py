@@ -33,3 +33,6 @@ async def close_mongo_connection():
     if client:
         client.close()
         print("🔴 MongoDB connection closed")
+
+def get_chunks_collection():
+    return database["chunks"]

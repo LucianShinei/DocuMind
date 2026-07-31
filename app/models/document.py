@@ -9,3 +9,4 @@ class Document(BaseModel):
     size: int
     uploaded_at: datetime
     owner_id: str
+    text: str = ""
