@@ -23,8 +23,7 @@ UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
 
 
-async def save_document(file: UploadFile):
-
+async def save_document(file: UploadFile, user: dict):
     file_path = UPLOAD_DIR / file.filename
 
     with open(file_path, "wb") as buffer:
@@ -34,12 +33,13 @@ async def save_document(file: UploadFile):
         buffer.write(contents)
 
     document = Document(
-        filename=file.filename,
-        stored_path=str(file_path),
-        content_type=file.content_type,
-        size=file.size,
-        uploaded_at=datetime.utcnow(),
-    )
+    filename=file.filename,
+    stored_path=str(file_path),
+    content_type=file.content_type,
+    size=file.size,
+    owner_id=user["sub"],
+    uploaded_at=datetime.utcnow(),
+)
     collection = get_documents_collection()
 
     await collection.insert_one(document.model_dump())
@@ -53,16 +53,22 @@ from app.schemas.mappers import document_to_response
 
 
 async def get_all_documents(
-    skip: int = 0,
-    limit: int = 10,
-    search: str = "",
+    skip=0,
+    limit=10,
+    search="",
+    user=None,
 ):
     collection = get_documents_collection()
 
-    query = {}
+    query = {
+    "owner_id": user["sub"]
+}
 
     if search:
-        query = {"filename": {"$regex": search, "$options": "i"}}
+        query["filename"] = {
+            "$regex": search,
+            "$options": "i",
+        }
 
     documents = (
         await collection.find(query)
@@ -73,10 +79,13 @@ async def get_all_documents(
 
     return [document_to_response(doc) for doc in documents]
 
-async def get_document_by_id(document_id: str):
+async def get_document_by_id(
+    document_id: str,
+    user: dict,
+):
     collection = get_documents_collection()
 
-    document = await collection.find_one({"_id": ObjectId(document_id)})
+    document = await collection.find_one({"_id": ObjectId(document_id), "owner_id": user["sub"]})
 
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
@@ -84,76 +93,57 @@ async def get_document_by_id(document_id: str):
     return document_to_response(document)
 
 
-async def delete_document(document_id: str):
+async def delete_document_by_id(
+    document_id: str,
+    user: dict,
+):
     collection = get_documents_collection()
 
-    document = await collection.find_one({"_id": ObjectId(document_id)})
+    document = await collection.find_one(
+        {
+            "_id": ObjectId(document_id),
+            "owner_id": user["sub"],
+        }
+    )
 
     if not document:
-        raise HTTPException(status_code=404, detail="Document not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Document not found",
+        )
 
     Path(document["stored_path"]).unlink(missing_ok=True)
 
-    await collection.delete_one({"_id": ObjectId(document_id)})
+    await collection.delete_one(
+        {
+            "_id": ObjectId(document_id),
+            "owner_id": user["sub"],
+        }
+    )
 
     return {"message": "Document deleted successfully"}
 
-
-async def download_document(document_id: str):
+async def download_document_by_id(
+    document_id: str,
+    user: dict,
+):
     collection = get_documents_collection()
 
-    document = await collection.find_one({"_id": ObjectId(document_id)})
+    document = await collection.find_one(
+        {
+            "_id": ObjectId(document_id),
+            "owner_id": user["sub"],
+        }
+    )
 
     if not document:
-        raise HTTPException(status_code=404, detail="Document not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Document not found",
+        )
 
     return FileResponse(
         path=document["stored_path"],
         filename=document["filename"],
         media_type=document["content_type"],
     )
-
-
-async def register_user(user):
-    db = get_database()
-
-    existing = await db.users.find_one({"email": user.email})
-
-    if existing:
-        raise ValueError("Email already registered")
-
-    new_user = User(
-        username=user.username,
-        email=user.email,
-        hashed_password=hash_password(user.password),
-        created_at=datetime.utcnow(),
-    )
-
-    result = await db.users.insert_one(new_user.model_dump())
-
-    return {
-        "id": str(result.inserted_id),
-        "username": user.username,
-        "email": user.email,
-    }
-
-
-async def login_user(user):
-    db = get_database()
-
-    existing = await db.users.find_one({"email": user.email})
-
-    if not existing or not verify_password(
-        user.password,
-        existing["hashed_password"],
-    ):
-        raise ValueError("Invalid credentials")
-
-    token = create_access_token(
-        {
-            "sub": str(existing["_id"]),
-            "email": existing["email"],
-        }
-    )
-
-    return {"access_token": token, "token_type": "bearer"}

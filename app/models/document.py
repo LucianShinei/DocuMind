@@ -8,3 +8,4 @@ class Document(BaseModel):
     content_type: str
     size: int
     uploaded_at: datetime
+    owner_id: str

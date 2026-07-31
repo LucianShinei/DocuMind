@@ -30,13 +30,13 @@ async def register_user(user):
     }
 
 
-async def login_user(user):
+async def login_user(email: str, password: str):
     db = get_database()
 
-    existing = await db.users.find_one({"email": user.email})
+    existing = await db.users.find_one({"email": email})
 
     if not existing or not verify_password(
-        user.password,
+        password,
         existing["hashed_password"],
     ):
         raise ValueError("Invalid credentials")
@@ -48,4 +48,7 @@ async def login_user(user):
         }
     )
 
-    return {"access_token": token, "token_type": "bearer"}
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+    }
